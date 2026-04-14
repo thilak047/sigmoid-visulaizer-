@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Pass Predictor</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --card-2: #f8fafc;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+      --soft-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    body.dark {
+      --bg: #0b1220;
+      --card: #111827;
+      --card-2: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --border: #1f2937;
+      --primary: #60a5fa;
+      --primary-dark: #3b82f6;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      --soft-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(59, 130, 246, 0.10), transparent 35%),
+        linear-gradient(180deg, var(--bg), var(--bg));
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+
+    .page {
+      width: min(1100px, calc(100% - 32px));
+      margin: 28px auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 4px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .theme-btn {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      box-shadow: var(--soft-shadow);
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .theme-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: color-mix(in srgb, var(--card) 96%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel {
+      padding: 28px;
+      position: relative;
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 52ch;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      outline: none;
+      background: var(--card-2);
+      color: var(--text);
+      font-size: 1rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .btn {
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
+      transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      background: var(--card-2);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .chip:hover {
+      transform: translateY(-1px);
+      border-color: var(--primary);
+    }
+
+    .slider-wrap {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--card-2);
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .result-area {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--card), var(--card-2));
+      min-height: 126px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 3px solid rgba(148, 163, 184, 0.35);
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+
+    .result-box {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    .result-box.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .result-text {
+      margin: 0;
+      font-size: clamp(1.15rem, 2vw, 1.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .prob-text {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .meta-row {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .meter {
+      width: 100%;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.20);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+      transition: width 0.8s ease;
+    }
+
+    .small-note {
+      font-size: 0.96rem;
+      color: var(--muted);
+    }
+
+    .copy-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .copy-status {
+      font-size: 0.92rem;
+      color: var(--muted);
+      min-height: 1.2em;
+    }
+
+    .chart-card {
+      padding: 18px 18px 8px;
+    }
+
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 6px 8px 14px;
+      flex-wrap: wrap;
+    }
+
+    .chart-head h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .chart-head span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .chart-wrap {
+      height: 420px;
+      padding: 0 4px 8px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .footer-tip {
+      padding: 0 4px 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-wrap {
+        height: 360px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .panel {
+        padding: 20px;
+      }
+
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .chart-wrap {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Student Pass Predictor</h1>
+        <p>Sigmoid model trained in Python, deployed in the browser</p>
+      </div>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 Dark mode</button>
+    </div>
+
+    <div class="hero">
+      <div class="card panel">
+        <h2 class="title">Predict pass or fail with sigmoid model</h2>
+        <p class="subtitle">
+          Enter study hours, see the probability, the decision boundary, and a live chart that explains the model visually.
+        </p>
+
+        <div class="controls">
+          <div class="input-row">
+            <input id="hoursInput" type="number" min="0" step="0.1" placeholder="Enter study hours" />
+            <button class="btn" onclick="predict()">Predict</button>
+          </div>
+
+          <div class="slider-wrap">
+            <div class="slider-head">
+              <span>Quick adjust</span>
+              <span><strong id="sliderValue">3.5</strong> hours</span>
+            </div>
+            <input id="hoursSlider" type="range" min="0" max="6" step="0.1" value="3.5" />
+          </div>
+
+          <div class="quick-actions">
+            <button class="chip" onclick="setQuickValue(2)">2 hrs</button>
+            <button class="chip" onclick="setQuickValue(3.5)">3.5 hrs</button>
+            <button class="chip" onclick="setQuickValue(5)">5 hrs</button>
+            <button class="chip" onclick="resetAll()">Reset</button>
+          </div>
+        </div>
+
+        <div class="result-area">
+          <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div>Analyzing your study pattern...</div>
+          </div>
+
+          <div id="resultBox" class="result-box">
+            <p id="probText" class="prob-text"></p>
+            <p id="resultText" class="result-text"></p>
+
+            <div class="meta-row">
+              <div class="meter" aria-label="confidence meter">
+                <div id="meterFill" class="meter-fill"></div>
+              </div>
+              <div id="boundaryText" class="small-note"></div>
+              <div id="tipText" class="small-note"></div>
+            </div>
+
+            <div class="copy-row">
+              <button class="btn secondary" onclick="copySummary()">Copy summary</button>
+              <span id="copyStatus" class="copy-status"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head">
+          <h2>Model Visualization</h2>
+          <span>Green = pass zone, red = fail zone</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart"></canvas>
+        </div>
+        <div class="footer-tip">
+          The curve crosses 0.5 at the decision boundary, which is the exact cutoff used by the classifier.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Trained values from Colab
+    const w = 1.754640957579486;
+    const b = -5.905070945469421;
+
+    let chartInstance = null;
+    let currentState = {
+      hours: 3.5,
+      prob: 0.5,
+      result: "Borderline PASS ⚠️"
+    };
+
+    function sigmoid(x) {
+      return 1 / (1 + Math.exp(-x));
+    }
+
+    function getTheme() {
+      return localStorage.getItem("theme") || "light";
+    }
+
+    function applyTheme(theme) {
+      document.body.classList.toggle("dark", theme === "dark");
+      const btn = document.getElementById("themeBtn");
+      btn.textContent = theme === "dark" ? "☀️ Light mode" : "🌙 Dark mode";
+      localStorage.setItem("theme", theme);
+      if (chartInstance) {
+        drawGraph(currentState.hours, currentState.prob);
+      }
+    }
+
+    function toggleTheme() {
+      applyTheme(document.body.classList.contains("dark") ? "light" : "dark");
+    }
+
+    function syncInputs(value) {
+      const safeValue = Math.max(0, Math.min(6, Number(value)));
+      document.getElementById("hoursInput").value = safeValue;
+      document.getElementById("hoursSlider").value = safeValue;
+      document.getElementById("sliderValue").textContent = safeValue.toFixed(1);
+      return safeValue;
+    }
+
+    function setQuickValue(value) {
+      syncInputs(value);
+      predict();
+    }
+
+    function resetAll() {
+      syncInputs(3.5);
+      document.getElementById("resultBox").classList.remove("show");
+      document.getElementById("copyStatus").textContent = "";
+      document.getElementById("tipText").textContent = "";
+      drawGraph(3.5, sigmoid(w * 3.5 + b));
+    }
+
+    function predict() {
+      const loading = document.getElementById("loading");
+      const resultBox = document.getElementById("resultBox");
+
+      let hours = parseFloat(document.getElementById("hoursInput").value);
+      if (isNaN(hours) || hours < 0) {
+        alert("Enter valid study hours");
+        return;
+      }
+
+      hours = syncInputs(hours);
+      loading.style.display = "flex";
+      resultBox.classList.remove("show");
+
+      setTimeout(() => {
+        const prob = sigmoid(w * hours + b);
+        const boundary = -b / w;
+        const dist = hours - boundary;
+
+        let resultText = "";
+        let statusColor = "";
+
+        if (prob >= 0.7) {
+          resultText = "High chance of PASS 🔥";
+          statusColor = "var(--success)";
+        } else if (prob >= 0.5) {
+          resultText = "Borderline PASS ⚠️";
+          statusColor = "var(--warning)";
+        } else {
+          resultText = "Likely FAIL ❌";
+          statusColor = "var(--danger)";
+        }
+
+        currentState = { hours, prob, result: resultText };
+
+        document.getElementById("probText").textContent = `Probability: ${prob.toFixed(2)}`;
+        const resultEl = document.getElementById("resultText");
+        resultEl.textContent = resultText;
+        resultEl.style.color = statusColor;
+
+        document.getElementById("boundaryText").textContent =
+          `Minimum hours needed to pass: ${boundary.toFixed(2)}`;
+
+        const trend =
+          Math.abs(dist) < 0.15
+            ? "You are very close to the boundary."
+            : dist > 0
+              ? `You are ${dist.toFixed(2)} hours above the boundary.`
+              : `You are ${Math.abs(dist).toFixed(2)} hours below the boundary.`;
+
+        document.getElementById("tipText").textContent =
+          trend + " More hours increase the pass probability.";
+
+        document.getElementById("meterFill").style.width = `${Math.max(0, Math.min(100, prob * 100))}%`;
+
+        loading.style.display = "none";
+        resultBox.classList.add("show");
+        drawGraph(hours, prob);
+      }, 900);
+    }
+
+    function copySummary() {
+      const text =
+        `Student Pass Predictor\n` +
+        `Hours: ${currentState.hours.toFixed(1)}\n` +
+        `Probability: ${currentState.prob.toFixed(2)}\n` +
+        `Result: ${currentState.result}\n` +
+        `Model: sigmoid(wx + b)\n` +
+        `w=${w}\n` +
+        `b=${b}\n`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const el = document.getElementById("copyStatus");
+        el.textContent = "Summary copied to clipboard.";
+        setTimeout(() => {
+          el.textContent = "";
+        }, 1800);
+      });
+    }
+
+    const zonePlugin = {
+      id: "zonePlugin",
+      beforeDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales.y) return;
+
+        const top = chartArea.top;
+        const bottom = chartArea.bottom;
+        const left = chartArea.left;
+        const right = chartArea.right;
+        const boundaryY = scales.y.getPixelForValue(0.5);
+
+        ctx.save();
+        ctx.fillStyle = "rgba(34, 197, 94, 0.08)";
+        ctx.fillRect(left, top, right - left, boundaryY - top);
+
+        ctx.fillStyle = "rgba(239, 68, 68, 0.08)";
+        ctx.fillRect(left, boundaryY, right - left, bottom - boundaryY);
+
+        ctx.restore();
+      }
+    };
+
+    Chart.register(zonePlugin);
+
+    function drawGraph(userHours = null, userProb = null) {
+      const canvas = document.getElementById("chart");
+      if (!canvas) {
+        console.error("Canvas not found");
+        return;
+      }
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        console.error("Canvas context not found");
+        return;
+      }
+
+      const curve = [];
+      const passPoints = [];
+      const failPoints = [];
+
+      for (let x = 0; x <= 6; x += 0.1) {
+        const y = sigmoid(w * x + b);
+        const point = { x: +x.toFixed(2), y };
+        curve.push(point);
+        if (y >= 0.5) passPoints.push(point);
+        else failPoints.push(point);
+      }
+
+      const thresholdLine = [
+        { x: 0, y: 0.5 },
+        { x: 6, y: 0.5 }
+      ];
+
+      const userPoint =
+        userHours === null || userProb === null
+          ? []
+          : [{ x: userHours, y: userProb }];
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          datasets: [
+            {
+              label: "Sigmoid Curve",
+              data: curve,
+              borderColor: "#3b82f6",
+              backgroundColor: "transparent",
+              pointRadius: 0,
+              borderWidth: 3,
+              tension: 0.35
+            },
+            {
+              label: "PASS ≥ 0.5",
+              data: passPoints,
+              showLine: false,
+              pointRadius: 3,
+              pointHoverRadius: 4,
+              borderColor: "#22c55e",
+              backgroundColor: "#22c55e"
+            },
+            {
+              label: "FAIL < 0.5",
+              data: failPoints,
+              showLine: false,
+              pointRadius: 3,
+              pointHoverRadius: 4,
+              borderColor: "#ef4444",
+              backgroundColor: "#ef4444"
+            },
+            {
+              label: "Threshold 0.5",
+              data: thresholdLine,
+              borderColor: "#94a3b8",
+              borderDash: [6, 6],
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0
+            },
+            {
+              label: "Your Input",
+              data: userPoint,
+              showLine: false,
+              pointRadius: 7,
+              pointHoverRadius: 8,
+              backgroundColor: "#111827",
+              borderColor: "#111827"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 900,
+            easing: "easeOutQuart"
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                usePointStyle: true,
+                boxWidth: 10,
+                color: getComputedStyle(document.body).getPropertyValue("--text")
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const x = context.parsed.x;
+                  const y = context.parsed.y;
+                  return `Hours: ${Number(x).toFixed(2)}, Probability: ${Number(y).toFixed(2)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: "linear",
+              min: 0,
+              max: 6,
+              title: {
+                display: true,
+                text: "Hours Studied",
+                color: getComputedStyle(document.body).getPropertyValue("--text")
+              },
+              grid: {
+                color: "rgba(148, 163, 184, 0.20)"
+              },
+              ticks: {
+                color: getComputedStyle(document.body).getPropertyValue("--muted")
+              }
+            },
+            y: {
+              min: 0,
+              max: 1,
+              title: {
+                display: true,
+                text: "Probability",
+                color: getComputedStyle(document.body).getPropertyValue("--text")
+              },
+              grid: {
+                color: "rgba(148, 163, 184, 0.20)"
+              },
+              ticks: {
+                color: getComputedStyle(document.body).getPropertyValue("--muted")
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // live sync
+    document.getElementById("hoursInput").addEventListener("input", (e) => {
+      const v = e.target.value;
+      document.getElementById("hoursSlider").value = v === "" ? 0 : Math.max(0, Math.min(6, Number(v)));
+      document.getElementById("sliderValue").textContent = (v === "" ? 0 : Number(v)).toFixed(1);
+    });
+
+    document.getElementById("hoursSlider").addEventListener("input", (e) => {
+      const v = Number(e.target.value);
+      document.getElementById("hoursInput").value = v;
+      document.getElementById("sliderValue").textContent = v.toFixed(1);
+    });
+
+    window.onload = () => {
+      applyTheme(getTheme());
+      syncInputs(3.5);
+      drawGraph(3.5, sigmoid(w * 3.5 + b));
+    };
+  </script>
+</body>
+</html>
